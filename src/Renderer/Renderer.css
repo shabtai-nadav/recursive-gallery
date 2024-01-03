@@ -1,0 +1,8 @@
+.Renderer {
+  flex: 1;
+  min-width: 0;
+}
+
+img.Renderer {
+  object-fit: contain;
+}

@@ -1,0 +1,124 @@
+{
+  "name": "recursive-gallery",
+  "version": "1.0.0",
+  "private": true,
+  "author": "Nellie Doe <nellie@doe.com>",
+  "description": "Video and Picture gallery that lists in a specified directory recursively",
+  "main": "public/electron.js",
+  "build": {
+    "appId": "com.ns.recursive-gallery",
+    "productName": "Recursive Gallery",
+    "linux": {
+      "target": "deb"
+    },
+    "directories": {
+      "buildResources": "public"
+    },
+    "files": [
+      "build/**/*",
+      "node_modules/**/*"
+    ],
+    "fileAssociations": [
+      {
+        "ext": "jpeg",
+        "mimeType": "image/jpeg",
+        "role": "Viewer"
+      },
+      {
+        "ext": "jpg",
+        "mimeType": "image/jpeg",
+        "role": "Viewer"
+      },
+      {
+        "ext": "png",
+        "mimeType": "image/png",
+        "role": "Viewer"
+      },
+      {
+        "ext": "svg",
+        "mimeType": "image/svg+xml",
+        "role": "Viewer"
+      },
+      {
+        "ext": "bmp",
+        "mimeType": "image/bmp",
+        "role": "Viewer"
+      },
+      {
+        "ext": "webp",
+        "mimeType": "image/webp",
+        "role": "Viewer"
+      },
+      {
+        "ext": "gif",
+        "mimeType": "image/gif",
+        "role": "Viewer"
+      },
+      {
+        "ext": "mp4",
+        "mimeType": "video/mp4",
+        "role": "Viewer"
+      },
+      {
+        "ext": "mov",
+        "mimeType": "video/quicktime",
+        "role": "Viewer"
+      },
+      {
+        "ext": "webm",
+        "mimeType": "video/webm",
+        "role": "Viewer"
+      },
+      {
+        "ext": "mkv",
+        "mimeType": "video/x-matroska",
+        "role": "Viewer"
+      }
+    ]
+  },
+  "homepage": "./",
+  "dependencies": {
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "clsx": "^2.0.0",
+    "electron-is-dev": "^2.0.0",
+    "lodash": "^4.17.21",
+    "mime-types": "^2.1.35",
+    "open-file-explorer": "^1.0.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "5.0.1",
+    "web-vitals": "^2.1.4"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "electron": "electron .",
+    "electron:package:linux": "npm run build && electron-builder -l -c.extraMetadata.main=build/electron.js"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "electron": "^28.1.0",
+    "electron-builder": "^24.9.1"
+  }
+}

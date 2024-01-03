@@ -1,0 +1,21 @@
+.Slideshow {
+  flex: 1;
+  display: flex;
+  position: relative;
+  background-color: black;
+  min-width: 0;
+}
+
+.Controls {
+  position: absolute;
+  top: 0;
+  width: 100%;
+}
+
+.Previous {
+  left: 0;
+}
+
+.Next {
+  right: 0;
+}
