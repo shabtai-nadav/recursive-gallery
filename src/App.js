@@ -1,10 +1,10 @@
 import './App.css';
 import {useEffect, useMemo, useRef, useState} from 'react';
-import {findIndex, isEmpty, isNumber, orderBy, shuffle, sortBy, throttle} from 'lodash';
+import {findIndex, isEmpty, isNumber, shuffle, throttle} from 'lodash';
 import {Renderer} from './Renderer/Renderer';
 import {SlideshowContextProvider} from './SlideshowContext/SlideshowContext';
 import {Controls} from './Controls/Controls';
-import { Sort, SortDirection, basicSort, sortDate } from './sort.utils';
+import {basicSort, Sort, sortDate, SortDirection} from './sort.utils';
 
 const {ipcRenderer} = window.require("electron");
 
@@ -170,7 +170,7 @@ function App() {
 
     function getFile(file) {
         ipcRenderer.invoke('file/get', file?.path)
-            .then(extraData => setContent({...file, extraData}));
+            .then(extraData => setContent({...file, ...extraData}));
     }
 
     function onPrevious() {

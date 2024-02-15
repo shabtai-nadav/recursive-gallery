@@ -1,12 +1,12 @@
 import './Renderer.css';
-import { useContext, useEffect, useRef, useState, Fragment, useMemo } from "react";
-import { slideshowContext } from "../SlideshowContext/SlideshowContext";
-import { isNumber, map } from 'lodash';
+import {useContext, useEffect, useMemo, useState} from "react";
+import {slideshowContext} from "../SlideshowContext/SlideshowContext";
+import {isNumber, map} from 'lodash';
 
 export function Renderer() {
     const [intervalId, setIntervalId] = useState(null);
     const {content, play, selectedDuration, onNext} = useContext(slideshowContext);
-
+    
     const isVideo = useMemo(
         () => [
             'video/x-matroska',
