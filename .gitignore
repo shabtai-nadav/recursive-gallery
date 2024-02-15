@@ -1,8 +1,4 @@
-/*
-!/src/*
-!/public/*
-!/package.json
-!/package-lock.json
-!/README.md
-!/release.deb
-!/.gitignore
+.idea
+build
+dist
+node_modules

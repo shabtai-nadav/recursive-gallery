@@ -1,0 +1,19 @@
+.SideBarFolder {
+    display: flex;
+    flex-direction: column;
+}
+
+.SideBarFolder .SideBarFolderHeader {
+    font-weight: bold;
+}
+
+.SideBarFolder .SideBarFolderContent {
+    display: flex;
+    flex-direction: column;
+    padding: 12px 20px;
+    gap: 12px;
+}
+
+.SideBarFolder .SideBarFolderContent .SideBarFolderContentFile.Current {
+    font-weight: bold;
+}

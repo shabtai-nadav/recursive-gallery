@@ -3,9 +3,10 @@ const {app, BrowserWindow, dialog} = require("electron");
 const path = require('node:path');
 const fs = require('fs');
 const mime = require('mime-types');
-const {flatMap, filter, map, uniq} = require('lodash');
-const {ipcMain, remote} = require('electron');
+const {flatMap, filter, map} = require('lodash');
+const {ipcMain} = require('electron');
 const openExplorer = require('open-file-explorer');
+const os = require('os');
 
 let entryPoint = process.argv[isDev ? 2 : 1];
 
@@ -73,12 +74,14 @@ function findMedia(dirPath, recursive) {
     });
 
     const subDirs = filter(content, c => fs.lstatSync(c.path).isDirectory());
-    
+
     return [
         ...filter(content, c => SUPPORTED_MIME_TYPES.includes(mime.lookup(c.path))),
         ...recursive ? flatMap(subDirs, dir => findMedia(dir.path, recursive)) : []
     ];
 }
+
+ipcMain.handle("os/get", () => os.platform());
 
 ipcMain.handle("file/list", (event, recursive) => {
     if (fs.lstatSync(entryPoint).isDirectory()) {
@@ -91,15 +94,15 @@ ipcMain.handle("file/list", (event, recursive) => {
 ipcMain.handle("file/get", (event, contentPath) => {
     try {
         const fileMimeType = mime.lookup(contentPath);
-    
+
         let file;
-    
+
         if (BASE_64_MIME_TYPES.includes(fileMimeType)) {
             file = fs.readFileSync(contentPath).toString('base64');
         } else if (PLAIN_MIME_TYPES.includes(fileMimeType)) {
             file = fs.readFileSync(contentPath).toString();
         }
-    
+
         return {
             file,
             path: contentPath,
@@ -153,6 +156,7 @@ ipcMain.handle('devtools', () => {
 function createWindow() {
     // Create the browser window.
     window = new BrowserWindow({
+        titleBarStyle: 'hidden',
         width: 800,
         height: 600,
         webPreferences: {
@@ -162,6 +166,8 @@ function createWindow() {
             contextIsolation: false
         }
     });
+
+    window.setMenuBarVisibility(false)
 
     if (isDev) {
         //load the index.html from a url

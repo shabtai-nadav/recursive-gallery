@@ -19,3 +19,8 @@
 .Next {
   right: 0;
 }
+
+.SideBar {
+  width: 30%;
+  min-width: 352px;
+}

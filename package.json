@@ -97,7 +97,7 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "electron": "electron .",
-    "electron:package:linux": "npm run build && electron-builder -l -c.extraMetadata.main=build/electron.js && mv dist/recursive-gallery_1.0.0_amd64.deb ./release.deb"
+    "package": "npm run build && electron-builder -l -c.extraMetadata.main=build/electron.js && mv dist/recursive-gallery_1.0.0_amd64.deb ./release.deb"
   },
   "eslintConfig": {
     "extends": [

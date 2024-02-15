@@ -5,12 +5,15 @@ import {Renderer} from './Renderer/Renderer';
 import {SlideshowContextProvider} from './SlideshowContext/SlideshowContext';
 import {Controls} from './Controls/Controls';
 import {basicSort, Sort, sortDate, SortDirection} from './sort.utils';
+import {SideBar} from "./SideBar/SideBar";
 
 const {ipcRenderer} = window.require("electron");
 
 const DEFAULT_DURATION = 8;
 
 function App() {
+    const [showSideBar, setShowSideBar] = useState(true);
+    const [timeByVideo, setTimeByVideo] = useState({});
     const [entryPoint, setEntryPoint] = useState(null);
     const [shuffleCount, setShuffleCount] = useState(0);
     const [sort, setSort] = useState(Sort.Modified);
@@ -48,6 +51,7 @@ function App() {
 
     useEffect(() => {
         let options = localStorage.getItem('options');
+        let videoOptions = localStorage.getItem('videoOptions');
 
         if (options) {
             options = JSON.parse(options);
@@ -56,6 +60,11 @@ function App() {
             setRecursive(options.recursive);
             setSort(options.sort || Sort.Modified);
             setSortDirection(options.sortDirection || SortDirection.Asc);
+        }
+
+        if (videoOptions) {
+            videoOptions = JSON.parse(videoOptions);
+            setTimeByVideo(videoOptions.timeByVideo);
         }
 
         ipcRenderer.invoke('file/entrypoint')
@@ -95,8 +104,16 @@ function App() {
             return;
         }
         
-        changeLocalStorage();
+        changeOptionsLocalStorage();
     }, [recursive, selectedDuration, sort, sortDirection]);
+
+    useEffect(() => {
+        if (!loaded) {
+            return;
+        }
+
+        changeVideoOptionsLocalStorage();
+    }, [timeByVideo]);
 
     useEffect(() => {
         getFile(sortedFiles[currentIndex]);
@@ -135,7 +152,7 @@ function App() {
 
                 break;
             case Sort.Name:
-                sortedFiles = sortedFiles.sort((a, b) => basicSort(a.name, b.name, sortDirection));
+                sortedFiles = sortedFiles.sort((a, b) => a.name.localeCompare(b.name, navigator.languages[0] || navigator.language, {numeric: true, ignorePunctuation: true}));
 
                 break;
             case Sort.Shuffle:
@@ -193,7 +210,7 @@ function App() {
         })
     }
 
-    function changeLocalStorage() {
+    function changeOptionsLocalStorage() {
         localStorage.setItem(
             'options',
             JSON.stringify({
@@ -201,6 +218,15 @@ function App() {
                 recursive,
                 sort,
                 sortDirection
+            })
+        );
+    }
+
+    function changeVideoOptionsLocalStorage() {
+        localStorage.setItem(
+            'videoOptions',
+            JSON.stringify({
+                timeByVideo
             })
         );
     }
@@ -241,9 +267,28 @@ function App() {
         ipcRenderer.invoke('directory/open', sortedFiles[currentIndex]?.dirPath);
     }
 
+    function setCurrent(file) {
+        setCurrentIndex(findIndex(sortedFiles, {path: file.path}));
+    }
+
+    function toggleSideBar() {
+        setShowSideBar(showSideBar => !showSideBar);
+    }
+
+    function setVideoTime(file, time) {
+        setTimeByVideo(curr => ({
+            ...curr,
+            [file.path]: time
+        }));
+    }
+
     return (
         <SlideshowContextProvider value={{
             root,
+            timeByVideo,
+            setVideoTime,
+            setCurrent,
+            toggleSideBar,
             files: sortedFiles,
             content,
             play,
@@ -270,6 +315,8 @@ function App() {
                 {!isEmpty(sortedFiles) && <Renderer/>}
                 <Controls/>
             </div>
+            {showSideBar && <SideBar />}
+            {!showSideBar && <div onClick={toggleSideBar}>open</div>}
         </SlideshowContextProvider>
     );
 }

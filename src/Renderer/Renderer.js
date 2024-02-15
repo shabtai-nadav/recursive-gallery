@@ -4,8 +4,9 @@ import {slideshowContext} from "../SlideshowContext/SlideshowContext";
 import {isNumber, map} from 'lodash';
 
 export function Renderer() {
+    const [videoRef, setVideoRef] = useState(null);
     const [intervalId, setIntervalId] = useState(null);
-    const {content, play, selectedDuration, onNext} = useContext(slideshowContext);
+    const {content, play, selectedDuration, timeByVideo, onNext, setVideoTime} = useContext(slideshowContext);
     
     const isVideo = useMemo(
         () => [
@@ -44,6 +45,14 @@ export function Renderer() {
         setIntervalId(setInterval(onNext, selectedDuration * 1000));
     }, [selectedDuration]);
 
+    useEffect(() => {
+        if (!videoRef || !timeByVideo) {
+            return;
+        }
+
+        videoRef.currentTime = timeByVideo[content.path];
+    }, [content, videoRef])
+
     function resetInterval() {
         clearInterval(intervalId);
         setIntervalId(null);
@@ -55,10 +64,22 @@ export function Renderer() {
 
         return `file://${encodedPath}`;
     }
+
+    function _setVideoTime(e) {
+        setVideoTime(content, e.target.currentTime);
+    }
   
     if (isVideo) {
         return (
-            <video key={content.path} className='Renderer' controls autoPlay loop={!play} onEnded={onNext}>
+            <video muted
+                   controls
+                   autoPlay
+                   ref={setVideoRef}
+                   key={content.path}
+                   onTimeUpdate={_setVideoTime}
+                   className='Renderer'
+                   loop={!play}
+                   onEnded={onNext}>
                 <source src={encodePath(content.path)} type='video/mp4' />
             </video>
         );
