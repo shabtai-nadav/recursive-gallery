@@ -1,6 +1,6 @@
 import {useEffect, useMemo, useState} from "react";
 import {basicSort, Sort, sortDate} from "../sort.utils";
-import {isEmpty, map, shuffle} from "lodash";
+import {compact, differenceBy, isEmpty, map, shuffle} from "lodash";
 import {useSortOptions} from "./options-hook";
 
 export function useSort(files, entryPoint) {
@@ -48,6 +48,7 @@ export function useSort(files, entryPoint) {
             default:
                 if (!shuffleCount && !isEmpty(shuffleOrder) && !isEmpty(files)) {
                     sortedFiles = map(shuffleOrder, file => files[file]);
+                    sortedFiles = [...compact(sortedFiles), ...differenceBy(files, sortedFiles, 'path')]
                 } else {
                     sortedFiles = shuffle(sortedFiles);
                 }
