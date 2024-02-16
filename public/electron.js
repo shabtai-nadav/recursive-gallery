@@ -8,7 +8,10 @@ const {ipcMain} = require('electron');
 const openExplorer = require('open-file-explorer');
 const os = require('os');
 
-let entryPoint = process.argv[isDev ? 2 : 1];
+let entryPoint = {
+    path: process.argv[isDev ? 2 : 1],
+    isDirectory: process.argv[isDev ? 2 : 1] ? fs.lstatSync(process.argv[isDev ? 2 : 1]).isDirectory() : false
+};
 
 const PATH_ONLY_MIME_TYPES = [
     'image/svg+xml',
@@ -84,11 +87,11 @@ function findMedia(dirPath, recursive) {
 ipcMain.handle("os/get", () => os.platform());
 
 ipcMain.handle("file/list", (event, recursive) => {
-    if (fs.lstatSync(entryPoint).isDirectory()) {
-        return findMedia(entryPoint, recursive);
+    if (fs.lstatSync(entryPoint.path).isDirectory()) {
+        return findMedia(entryPoint.path, recursive);
     }
 
-    return findMedia(path.dirname(entryPoint), recursive);
+    return findMedia(path.dirname(entryPoint.path), recursive);
 });
 
 ipcMain.handle("file/get", (event, contentPath) => {
@@ -114,7 +117,7 @@ ipcMain.handle("file/get", (event, contentPath) => {
 });
 
 ipcMain.handle('file/root', () => {
-    return path.dirname(entryPoint);
+    return path.dirname(entryPoint.path);
 });
 
 ipcMain.handle("file/entrypoint", () => {
@@ -126,7 +129,7 @@ ipcMain.handle('file/entrypoint/file', async () => {
         properties: ['openFile']
     });
 
-    entryPoint = selectedPath.filePaths[0];
+    entryPoint = {path: selectedPath.filePaths[0], isDirectory: false};
 
     return entryPoint;
 });
@@ -136,7 +139,7 @@ ipcMain.handle('file/entrypoint/directory', async () => {
         properties: ['openDirectory']
     });
 
-    entryPoint = selectedPath.filePaths[0];
+    entryPoint = {path: selectedPath.filePaths[0], isDirectory: true};
 
     return entryPoint;
 });

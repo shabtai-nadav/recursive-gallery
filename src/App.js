@@ -1,286 +1,54 @@
 import './App.css';
-import {useEffect, useMemo, useRef, useState} from 'react';
-import {findIndex, isEmpty, isNumber, shuffle, throttle} from 'lodash';
+import {isEmpty, isNumber} from 'lodash';
 import {Renderer} from './Renderer/Renderer';
 import {SlideshowContextProvider} from './SlideshowContext/SlideshowContext';
 import {Controls} from './Controls/Controls';
-import {basicSort, Sort, sortDate, SortDirection} from './sort.utils';
 import {SideBar} from "./SideBar/SideBar";
-
-const {ipcRenderer} = window.require("electron");
-
-const DEFAULT_DURATION = 8;
+import {useOptions, useVideoOptions} from "./hooks/options-hook";
+import {useControls} from "./hooks/controls-hook";
+import {useSort} from "./hooks/sort-hook";
+import {useLoad} from "./hooks/load-hook";
+import {useSideBar} from "./hooks/sidebar-hook";
+import {useControlsTimeout} from "./hooks/controls-timeout-hook";
+import {useContent} from "./hooks/content-hook";
+import {devtoolsApi} from "./api/devtools-api";
+import {directoryApi} from "./api/directory-api";
 
 function App() {
-    const [showSideBar, setShowSideBar] = useState(true);
-    const [timeByVideo, setTimeByVideo] = useState({});
-    const [entryPoint, setEntryPoint] = useState(null);
-    const [shuffleCount, setShuffleCount] = useState(0);
-    const [sort, setSort] = useState(Sort.Modified);
-    const [sortDirection, setSortDirection] = useState(SortDirection.Asc);
-    const [loaded, setLoaded] = useState(false);
-    const [root, setRoot] = useState(null);
-    const [controlsTimeoutId, setControlsTimeoutId] = useState();
-    const [play, setPlay] = useState(false);
-    const [selectedDuration, setSelectedDuration] = useState(DEFAULT_DURATION);
-    const [files, setFiles] = useState([]);
-    const sortedFiles = useMemo(() => sortFiles(files), [files, sort, sortDirection, shuffleCount]);
+    const controlsTimeoutId = useControlsTimeout();
+    const {
+        recursive,
+        selectedDuration,
+        sort,
+        sortDirection,
+        setRecursive,
+        setSelectedDuration,
+        setSort,
+        setSortDirection
+    } = useOptions();
 
-    const entryIndex = useMemo(() => {
-        const index = findIndex(sortedFiles, file => entryPoint === file.path);
+    const {
+        timeByVideo,
+        setVideoTime
+    } = useVideoOptions();
 
-        return index === -1 ? 0 : index;
-    }, [sortedFiles, entryPoint]);
+    const {toggleSideBar, showSideBar} = useSideBar();
 
-    const [currentIndex, setCurrentIndex] = useState(entryIndex);
-    const [content, setContent] = useState(null);
-    const [recursive, setRecursive] = useState(true);
-    
-    const throttledStartControlsTimeout = useRef(throttle(() => {
-        setControlsTimeoutId(setTimeout(
-            () => {
-                setControlsTimeoutId(null);
-            },
-            3 * 1000
-        ))
-    }, 100));
+    const {root, files, entryPoint, openDirectory, selectDirectory, selectFile} = useLoad(
+        recursive
+    );
 
-    useEffect(() => {
-        setCurrentIndex(entryIndex);
-    }, [entryIndex])
+    const {sortedFiles, shuffleContent} = useSort(files, sort, sortDirection);
 
-    useEffect(() => {
-        let options = localStorage.getItem('options');
-        let videoOptions = localStorage.getItem('videoOptions');
+    const {content, currentIndex, setCurrentIndex} = useContent(sortedFiles, entryPoint);
 
-        if (options) {
-            options = JSON.parse(options);
-
-            setSelectedDuration(options.selectedDuration || DEFAULT_DURATION);
-            setRecursive(options.recursive);
-            setSort(options.sort || Sort.Modified);
-            setSortDirection(options.sortDirection || SortDirection.Asc);
-        }
-
-        if (videoOptions) {
-            videoOptions = JSON.parse(videoOptions);
-            setTimeByVideo(videoOptions.timeByVideo);
-        }
-
-        ipcRenderer.invoke('file/entrypoint')
-            .then((entryPoint) => {
-                if (!entryPoint) {
-                    return;
-                }
-
-                return load(entryPoint, ('recursive' in (options || {}) ? options.recursive : recursive));
-            })
-            .finally(() => {
-                setLoaded(true);
-            });
-
-        function onMouseMove() {
-            throttledStartControlsTimeout.current();
-        }
-
-        document.addEventListener('mousemove', onMouseMove);
-
-        return () => document.removeEventListener('mousemove', onMouseMove)
-    }, []);
-
-    useEffect(() => {
-        if (!loaded) {
-            return;
-        }
-
-        ipcRenderer.invoke('file/list', recursive)
-            .then((files) => {
-                setFiles(files);
-            });
-    },[recursive]);
-
-    useEffect(() => {
-        if (!loaded) {
-            return;
-        }
-        
-        changeOptionsLocalStorage();
-    }, [recursive, selectedDuration, sort, sortDirection]);
-
-    useEffect(() => {
-        if (!loaded) {
-            return;
-        }
-
-        changeVideoOptionsLocalStorage();
-    }, [timeByVideo]);
-
-    useEffect(() => {
-        getFile(sortedFiles[currentIndex]);
-    }, [currentIndex, sortedFiles]);
-
-    useEffect(() => () => {
-        if (!isNumber(controlsTimeoutId)) {
-            return;
-        }
-
-        clearTimeout(controlsTimeoutId);
-    }, [controlsTimeoutId]);
-
-    useEffect(() => {
-        setFiles(sortedFiles);
-    }, [sort, sortDirection]);
-
-    function sortFiles(files) {
-        let sortedFiles = [...files];
-
-        switch(sort) {
-            case Sort.Created:
-                sortedFiles = sortedFiles.sort((a, b) => sortDate(a.created, b.created, sortDirection));
-
-                break;
-            case Sort.Modified:
-                sortedFiles = sortedFiles.sort((a, b) => sortDate(a.updated, b.updated, sortDirection));
-
-                break;
-            case Sort.Size:
-                sortedFiles = sortedFiles.sort((a, b) => basicSort(a.size, b.size, sortDirection));
-
-                break;
-            case Sort.Directory:
-                sortedFiles = sortedFiles.sort((a, b) => basicSort(a.dirPath, b.dirPath, sortDirection));
-
-                break;
-            case Sort.Name:
-                sortedFiles = sortedFiles.sort((a, b) => a.name.localeCompare(b.name, navigator.languages[0] || navigator.language, {numeric: true, ignorePunctuation: true}));
-
-                break;
-            case Sort.Shuffle:
-            default:
-                sortedFiles = shuffle(sortedFiles);
-
-                break;
-        }
-
-        return sortedFiles;
-    }
-
-    function load(entryPoint, _recursive = recursive) {
-        return Promise.all([
-            ipcRenderer.invoke('file/list', _recursive),
-            ipcRenderer.invoke('file/root')
-        ])
-            .then(([files, root]) => {
-                setFiles(files);
-                setEntryPoint(entryPoint);
-                setRoot(root);
-            })
-    }
-
-    function openDevTools() {
-        ipcRenderer.invoke('devtools');
-    }
-
-    function shuffleContent() {
-        setShuffleCount(shuffleCount + 1);
-    }
-
-    function getFile(file) {
-        ipcRenderer.invoke('file/get', file?.path)
-            .then(extraData => setContent({...file, ...extraData}));
-    }
-
-    function onPrevious() {
-        setCurrentIndex(curr => {
-            if (!curr) {
-                return sortedFiles.length - 1;
-            }
-
-            return curr - 1;
-        })
-    }
-
-    function onNext() {
-        setCurrentIndex(curr => {
-            if (curr === sortedFiles.length - 1) {
-                return 0;
-            }
-
-            return curr + 1;
-        })
-    }
-
-    function changeOptionsLocalStorage() {
-        localStorage.setItem(
-            'options',
-            JSON.stringify({
-                selectedDuration,
-                recursive,
-                sort,
-                sortDirection
-            })
-        );
-    }
-
-    function changeVideoOptionsLocalStorage() {
-        localStorage.setItem(
-            'videoOptions',
-            JSON.stringify({
-                timeByVideo
-            })
-        );
-    }
-
-    function selectFile() {
-        setLoaded(false);
-
-        ipcRenderer.invoke('file/entrypoint/file')
-            .then((entryPoint) => {
-                if (!entryPoint) {
-                    return;
-                }
-
-                setEntryPoint(entryPoint);
-
-                return load()
-            })
-            .finally(() => setLoaded(true));
-    }
-
-    function selectDirectory() {
-        setLoaded(false);
-
-        ipcRenderer.invoke('file/entrypoint/directory')
-            .then((entryPoint) => {
-                if (!entryPoint) {
-                    return;
-                }
-
-                setEntryPoint(entryPoint);
-
-                return load()
-            })
-            .finally(() => setLoaded(true));
-    }
-    
-    function openDirectory() {
-        ipcRenderer.invoke('directory/open', sortedFiles[currentIndex]?.dirPath);
-    }
-
-    function setCurrent(file) {
-        setCurrentIndex(findIndex(sortedFiles, {path: file.path}));
-    }
-
-    function toggleSideBar() {
-        setShowSideBar(showSideBar => !showSideBar);
-    }
-
-    function setVideoTime(file, time) {
-        setTimeByVideo(curr => ({
-            ...curr,
-            [file.path]: time
-        }));
-    }
+    const {
+        play,
+        setPlay,
+        setCurrent,
+        onPrevious,
+        onNext
+    } = useControls(sortedFiles, setCurrentIndex);
 
     return (
         <SlideshowContextProvider value={{
@@ -298,12 +66,12 @@ function App() {
             showControls: isNumber(controlsTimeoutId),
             sort,
             sortDirection,
-            openDirectory,
+            openDirectory: directoryApi.openInExplorer.bind(null, sortedFiles[currentIndex]?.dirPath),
             setSort,
             setSortDirection,
             selectDirectory,
             selectFile,
-            openDevTools,
+            openDevTools: devtoolsApi.open,
             setRecursive,
             shuffleContent,
             onNext,
@@ -315,7 +83,7 @@ function App() {
                 {!isEmpty(sortedFiles) && <Renderer/>}
                 <Controls/>
             </div>
-            {showSideBar && <SideBar />}
+            {showSideBar && <SideBar/>}
             {!showSideBar && <div onClick={toggleSideBar}>open</div>}
         </SlideshowContextProvider>
     );

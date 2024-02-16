@@ -50,7 +50,7 @@ export function Renderer() {
             return;
         }
 
-        videoRef.currentTime = timeByVideo[content.path];
+        videoRef.currentTime = timeByVideo[content.path] || 0;
     }, [content, videoRef])
 
     function resetInterval() {
