@@ -144,6 +144,12 @@ ipcMain.handle('file/entrypoint/directory', async () => {
     return entryPoint;
 });
 
+ipcMain.handle('file/entrypoint/custom', async (event, path) => {
+    entryPoint = {path, isDirectory: fs.lstatSync(path).isDirectory()};
+
+    return entryPoint;
+});
+
 ipcMain.handle('directory/open', (event, directory) => {
     openExplorer(directory);
 

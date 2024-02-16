@@ -1,9 +1,17 @@
-import {useMemo, useState} from "react";
+import {useEffect, useMemo, useState} from "react";
 import {basicSort, Sort, sortDate} from "../sort.utils";
-import {shuffle} from "lodash";
+import {isEmpty, map, shuffle} from "lodash";
+import {useSortOptions} from "./options-hook";
 
-export function useSort(files, sort, sortDirection) {
+export function useSort(files, entryPoint) {
+    const [sortedFiles, setSortedFiles] = useState(files);
     const [shuffleCount, setShuffleCount] = useState(0);
+
+    const {sort, sortDirection, shuffleOrder, setSortDirection, setSort} = useSortOptions(entryPoint, files, sortedFiles);
+
+    useEffect(() => {
+        setSortedFiles(sortFiles(files));
+    }, [files, sort, sortDirection, shuffleCount]);
 
     function shuffleContent() {
         setShuffleCount(shuffleCount + 1);
@@ -38,7 +46,11 @@ export function useSort(files, sort, sortDirection) {
                 break;
             case Sort.Shuffle:
             default:
-                sortedFiles = shuffle(sortedFiles);
+                if (!shuffleCount && !isEmpty(shuffleOrder) && !isEmpty(files)) {
+                    sortedFiles = map(shuffleOrder, file => files[file]);
+                } else {
+                    sortedFiles = shuffle(sortedFiles);
+                }
 
                 break;
         }
@@ -47,7 +59,11 @@ export function useSort(files, sort, sortDirection) {
     }
 
     return {
+        sort,
+        sortDirection,
         shuffleContent,
-        sortedFiles: useMemo(() => sortFiles(files), [files, sort, sortDirection, shuffleCount])
+        sortedFiles,
+        setSort,
+        setSortDirection
     };
 }

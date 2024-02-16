@@ -73,9 +73,26 @@ export function useLoad(recursive) {
 
                 setEntryPoint(entryPoint);
 
-                return load()
+                return load(entryPoint)
             })
             .finally(() => setLoaded(true));
     }
-    return {root, files, loaded, entryPoint, selectFile, selectDirectory};
+
+    function selectEntryPoint(path) {
+        setLoaded(false);
+
+        fileApi.selectEntrypoint(path)
+            .then((entryPoint) => {
+                if (!entryPoint?.path) {
+                    return;
+                }
+
+                setEntryPoint(entryPoint);
+
+                return load(entryPoint)
+            })
+            .finally(() => setLoaded(true));
+    }
+
+    return {root, files, loaded, entryPoint, selectFile, selectDirectory, selectEntryPoint};
 }

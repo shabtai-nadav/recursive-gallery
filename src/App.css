@@ -24,3 +24,9 @@
   width: 30%;
   min-width: 352px;
 }
+
+.SideBarOpenButton {
+  position: absolute;
+  right: 0;
+  top: 172px;
+}

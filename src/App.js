@@ -8,7 +8,6 @@ import {useOptions, useVideoOptions} from "./hooks/options-hook";
 import {useControls} from "./hooks/controls-hook";
 import {useSort} from "./hooks/sort-hook";
 import {useLoad} from "./hooks/load-hook";
-import {useSideBar} from "./hooks/sidebar-hook";
 import {useControlsTimeout} from "./hooks/controls-timeout-hook";
 import {useContent} from "./hooks/content-hook";
 import {devtoolsApi} from "./api/devtools-api";
@@ -19,12 +18,10 @@ function App() {
     const {
         recursive,
         selectedDuration,
-        sort,
-        sortDirection,
         setRecursive,
         setSelectedDuration,
-        setSort,
-        setSortDirection
+        showSideBar,
+        toggleSideBar,
     } = useOptions();
 
     const {
@@ -32,15 +29,13 @@ function App() {
         setVideoTime
     } = useVideoOptions();
 
-    const {toggleSideBar, showSideBar} = useSideBar();
-
-    const {root, files, entryPoint, openDirectory, selectDirectory, selectFile} = useLoad(
+    const {root, files, entryPoint, selectEntryPoint, selectDirectory, selectFile} = useLoad(
         recursive
     );
 
-    const {sortedFiles, shuffleContent} = useSort(files, sort, sortDirection);
+    const {sortedFiles, shuffleContent, sort, sortDirection, setSort, setSortDirection} = useSort(files);
 
-    const {content, currentIndex, setCurrentIndex} = useContent(sortedFiles, entryPoint);
+    const {content, currentIndex, setCurrentIndex, previousEntryPoints} = useContent(sortedFiles, entryPoint);
 
     const {
         play,
@@ -52,6 +47,8 @@ function App() {
 
     return (
         <SlideshowContextProvider value={{
+            showSideBar,
+            entryPoint,
             root,
             timeByVideo,
             setVideoTime,
@@ -70,6 +67,7 @@ function App() {
             setSort,
             setSortDirection,
             selectDirectory,
+            selectEntryPoint,
             selectFile,
             openDevTools: devtoolsApi.open,
             setRecursive,
@@ -77,14 +75,14 @@ function App() {
             onNext,
             onPrevious,
             setPlay,
-            setSelectedDuration
+            setSelectedDuration,
+            previousEntryPoints
         }}>
             <div className="Slideshow">
                 {!isEmpty(sortedFiles) && <Renderer/>}
                 <Controls/>
             </div>
-            {showSideBar && <SideBar/>}
-            {!showSideBar && <div onClick={toggleSideBar}>open</div>}
+            <SideBar/>
         </SlideshowContextProvider>
     );
 }

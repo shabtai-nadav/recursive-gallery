@@ -1,7 +1,7 @@
 import {useState} from "react";
 
-export function useSideBar() {
-    const [showSideBar, setShowSideBar] = useState(true);
+export function useSideBar(defaultState) {
+    const [showSideBar, setShowSideBar] = useState(defaultState);
 
     function toggleSideBar() {
         setShowSideBar(showSideBar => !showSideBar);

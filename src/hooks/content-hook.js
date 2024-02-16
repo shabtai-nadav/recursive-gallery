@@ -1,13 +1,12 @@
 import {useEffect, useMemo, useState} from "react";
 import {findIndex} from "lodash";
 import {useContentOptions} from "./options-hook";
-
-const {ipcRenderer} = window.require("electron");
+import {fileApi} from "../api/file-api";
 
 export function useContent(sortedFiles, entryPoint) {
     const [content, setContent] = useState(null);
 
-    const {current} = useContentOptions(content, entryPoint);
+    const {current, previousEntryPoints} = useContentOptions(sortedFiles, content, entryPoint);
 
     const entryIndex = useMemo(() => {
         if (!entryPoint?.path) {
@@ -34,10 +33,10 @@ export function useContent(sortedFiles, entryPoint) {
     }, [currentIndex, sortedFiles]);
 
     function getFile(file) {
-        ipcRenderer.invoke('file/get', file?.path)
+        fileApi.get(file?.path)
             .then(extraData => setContent({...file, ...extraData}));
 
     }
 
-    return {content, currentIndex, setCurrentIndex};
+    return {content, currentIndex, setCurrentIndex, previousEntryPoints};
 }

@@ -3,3 +3,25 @@
     display: flex;
     flex-direction: column;
 }
+
+.SideBar .SideBarCloseButton, .SideBarOpenButton {
+    font-size: 32px;
+    cursor: pointer;
+}
+
+.SideBarOpenButton {
+    color: white;
+    width: 40px;
+    height: 60px;
+    border-radius: 80px 0 0 80px;
+    background: rgba(50, 50, 50, .4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity .2s ease-in-out;
+}
+
+.SideBarOpenButton.show {
+    opacity: 1;
+}

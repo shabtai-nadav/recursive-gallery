@@ -3,9 +3,10 @@ import {useContext, useMemo} from "react";
 import {slideshowContext} from "../SlideshowContext/SlideshowContext";
 import {chain, join, map, slice, split} from "lodash";
 import {SideBarFolder} from "./SideBarFolder/SideBarFolder";
+import clsx from "clsx";
 
 export function SideBar() {
-    const {content, files, toggleSideBar} = useContext(slideshowContext);
+    const {showSideBar, showControls, content, files, toggleSideBar, entryPoint, selectEntryPoint, previousEntryPoints} = useContext(slideshowContext);
 
     const fractions = useMemo(
         () => split(content?.dirPath, '/'),
@@ -30,14 +31,23 @@ export function SideBar() {
         [files, folder, fractions]
     );
 
+    if (!showSideBar) {
+        return <div onClick={toggleSideBar} className={clsx('SideBarOpenButton', { 'show': showControls })}>{'<'}</div>;
+    }
+
     return (
         <div className='SideBar'>
-            <div onClick={toggleSideBar}>Close</div>
-            {
+            <div className='SideBarCloseButton' onClick={toggleSideBar}>{'>'}</div>
+            { entryPoint?.path && (
                 map(folderFiles, (files, folder) => (
                     <SideBarFolder key={folder} folder={folder} files={files} />
                 ))
-            }
+            )}
+            { !entryPoint?.path && (
+                map(previousEntryPoints, (entryPoint) => (
+                    <div key={entryPoint} onClick={selectEntryPoint.bind(null, entryPoint)}>{entryPoint}</div>
+                ))
+            )}
         </div>
     )
 }
